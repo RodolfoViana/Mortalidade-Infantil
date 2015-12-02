@@ -1,0 +1,68 @@
+---
+title: "Mortalidade-Infantil"
+author: "Rodolfo Viana"
+date: "01-12-2015"
+output: html_document
+---
+
+Com o intuito de fazer um levantamento sobre a mortalidade infantil no estado da Paraíba, foram feitas as seguintes analises
+
+```{r}
+library(ggplot2)
+library(dplyr)
+```
+
+```{r}
+pre_natal_2011 <- read.csv("data/Consult_pre-natal_PARAIBA_2011_sem_acento.csv", sep=";")
+pre_natal_2012 <- read.csv("data/Consult_pre-natal_PARAIBA_2012_sem_acento.csv", sep=";")
+pre_natal_2013 <- read.csv("data/Consult_pre-natal_PARAIBA_2013_sem_acento.csv", sep=";")
+
+nascidos_vivos_2011 <- read.csv("data/NASCIDOS_VIVOS_PARAIBA_2011_sem_acento.csv", sep=";")
+nascidos_vivos_2012 <- read.csv("data/NASCIDOS_VIVOS_PARAIBA_2012_sem_acento.csv", sep=";")
+nascidos_vivos_2013 <- read.csv("data/NASCIDOS_VIVOS_PARAIBA_2013_sem_acento.csv", sep=";")
+
+obitos_infantis_2011 <- read.csv("data/OBITOS_INFANTIS_PARAIBA_2011_sem_acento.csv", sep=";")
+obitos_infantis_2012 <- read.csv("data/OBITOS_INFANTIS_PARAIBA_2012_sem_acento.csv", sep=";")
+obitos_infantis_2013 <- read.csv("data/OBITOS_INFANTIS_PARAIBA_2013_sem_acento.csv", sep=";")
+
+obitos_infantis_2012[,5] <-  NULL
+```
+
+```{r}
+# Calcula a taxa de mortalidade
+calcula_mortalidade <- function(df_obitos, df_nascidos_vivos){
+  df_obitos$Municipio <- as.character(df_obitos$Municipio)
+  obitos <- filter(df_obitos, Municipio == "Total")[,5]
+  
+  df_nascidos_vivos$Municipio <- as.character(df_nascidos_vivos$Municipio)
+  nascidos_vivos <- filter(df_nascidos_vivos, Municipio == "Total")[,2]
+  
+  (obitos/nascidos_vivos) * 1000
+}
+
+mortalidade_2011 <- calcula_mortalidade(obitos_infantis_2011, nascidos_vivos_2011)
+mortalidade_2012 <- calcula_mortalidade(obitos_infantis_2012, nascidos_vivos_2012)
+mortalidade_2013 <- calcula_mortalidade(obitos_infantis_2013, nascidos_vivos_2013)
+
+mortalidade <- data.frame(ano = c(2011, 2012, 2013),
+                          taxa = c(mortalidade_2011, mortalidade_2012, mortalidade_2013))
+
+
+p <- ggplot(data = mortalidade, aes(x=ano, y = taxa, group=1)) + 
+  geom_line() +
+  geom_point() + 
+  labs(y='Taxa de Mortalidade', x='Ano', title = "Mortalidade Infantil") + 
+  theme_classic() + 
+  theme(axis.ticks = element_blank()) +
+  scale_x_continuous(breaks=2011:2013)
+
+png("plot/mortalidade.png", width = 800, height = 600)
+p
+dev.off()
+```
+
+```{r}
+pre_natal_2011$Municipio <- as.character(pre_natal_2011$Municipio)
+
+filter(pre_natal_2011, Municipio == "Total")[2]
+```
